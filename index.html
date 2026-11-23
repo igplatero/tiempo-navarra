@@ -25,7 +25,7 @@ h2{font-size:1.4rem;font-weight:600;margin-bottom:.75rem}
 dl{display:grid;grid-template-columns:repeat(2,1fr);gap:.75rem 1rem}
 dt{color:var(--rosa);font-size:.85rem}dd{font-weight:600}
 
-/* Mapa meteorológico de Navarra */
+/* Mapa meteorológico municipal de Navarra */
 .mapa-sec{background:linear-gradient(165deg,#232934 0%,var(--carbon) 100%);border:1px solid rgba(245,239,237,.08);border-radius:28px;padding:clamp(1.15rem,2.5vw,1.75rem)}
 .mapa-cab{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:.75rem;margin-bottom:1rem}
 .mapa-cab h2{margin:0}
@@ -38,7 +38,8 @@ dt{color:var(--rosa);font-size:.85rem}dd{font-weight:600}
 @media(min-width:860px){.mapa-grid{grid-template-columns:1.25fr .85fr}}
 .mapa-lienzo{width:100%;max-width:580px;margin:auto;position:relative}
 .mapa-svg{width:100%;height:auto;display:block;overflow:visible}
-.navarra-silueta{fill:var(--pizarra);stroke:rgba(205,147,145,.55);stroke-width:2.4;stroke-linejoin:round;filter:drop-shadow(0 12px 24px rgba(0,0,0,.35))}
+.navarra-silueta{fill:var(--pizarra);stroke:rgba(205,147,145,.65);stroke-width:2.2;stroke-linejoin:round;filter:drop-shadow(0 12px 24px rgba(0,0,0,.35))}
+.navarra-municipios{fill:none;stroke:rgba(245,239,237,.18);stroke-width:.65;stroke-linejoin:round;stroke-linecap:round;pointer-events:none}
 .nodo{cursor:pointer;transition:transform .15s ease}
 .nodo:hover .nodo-card,.nodo.activo .nodo-card{fill:var(--granate);stroke:var(--rosa);stroke-width:1.8}
 .nodo:focus-visible{outline:none}
@@ -97,20 +98,22 @@ const icon=c=>{const n=parseInt(c);return !n||n<=11?"☀️":n==12||n==17?"🌤�
 const etq=(f,i)=>i==0?"Hoy":i==1?"Mañana":new Date(f+"T12:00:00").toLocaleDateString("es",{weekday:"long",day:"numeric"});
 const viento=d=>d.dir=="C"||!d.vel?"Viento en calma":`Viento ${d.dir} a ${d.vel} km/h`;
 
-// Proyección oficial ETRS89 / UTM Huso 30N (EPSG:25830) a viewBox 0 0 600 656.6 (escala métrica exacta: ~141,1 km x 157,0 km)
 const COORDS={
-  "Bera":            {x:280.7,y:69.7, dx:-102,dy:-24,w:92},
-  "Elizondo":        {x:329.9,y:122.3,dx:14,  dy:-16,w:96},
-  "Altsasu":         {x:143.6,y:222.8,dx:-102,dy:-22,w:92},
-  "Isaba":           {x:504.3,y:230.9,dx:-96, dy:14, w:88},
-  "Pamplona":        {x:295.4,y:254.3,dx:14,  dy:-24,w:98},
-  "Estella-Lizarra": {x:184.3,y:311.2,dx:-118,dy:-14,w:110},
-  "Sangüesa":        {x:402.3,y:345.6,dx:14,  dy:-20,w:94},
-  "Tafalla":         {x:288.9,y:366.3,dx:-98, dy:-12,w:88},
-  "Tudela":          {x:311.6,y:549.6,dx:14,  dy:-22,w:88}
+  "Bera":            {x:274.5,y:54.0, dx:-104,dy:-22,w:92},
+  "Elizondo":        {x:324.0,y:103.5,dx:14,  dy:-16,w:96},
+  "Altsasu":         {x:144.0,y:212.0,dx:-104,dy:-22,w:92},
+  "Isaba":           {x:496.0,y:216.0,dx:-98, dy:14, w:88},
+  "Pamplona":        {x:291.0,y:244.0,dx:14,  dy:-24,w:98},
+  "Estella-Lizarra": {x:185.0,y:296.0,dx:-120,dy:-14,w:110},
+  "Sangüesa":        {x:394.0,y:334.0,dx:14,  dy:-20,w:94},
+  "Tafalla":         {x:284.0,y:356.0,dx:-100,dy:-12,w:88},
+  "Tudela":          {x:307.0,y:537.0,dx:14,  dy:-22,w:88}
 };
 
-const CONTORNO_NAVARRA="M 266.6,60.9 L 280.8,50.0 L 301.1,58.3 L 318.6,71.8 L 343.3,89.1 L 374.0,110.2 L 383.1,133.6 L 357.5,153.8 L 375.1,169.2 L 400.9,158.9 L 415.7,172.3 L 441.5,165.9 L 470.7,177.0 L 504.1,182.1 L 543.2,187.8 L 550.0,224.3 L 521.9,260.5 L 485.2,300.7 L 451.0,329.1 L 434.1,357.0 L 417.4,392.8 L 394.9,436.6 L 388.5,482.0 L 385.1,531.3 L 368.3,574.9 L 360.0,606.6 L 324.7,603.2 L 287.8,592.0 L 259.6,570.8 L 232.9,549.5 L 255.9,517.7 L 258.4,486.2 L 228.9,470.8 L 196.5,447.6 L 166.9,412.5 L 131.8,401.1 L 85.1,399.5 L 50.0,374.1 L 62.8,334.7 L 93.1,303.0 L 110.3,271.3 L 115.8,239.8 L 130.1,216.1 L 170.3,188.1 L 187.3,160.3 L 201.4,132.6 L 216.8,100.9 L 245.3,76.9 Z";
+// Silueta y límites municipales extraídos directamente de Navarra_-_Mapa_municipal.svg.webp (viewBox 0 0 600 643.1)
+const CONTORNO_NAVARRA="M 289.1,14.7 L 297.2,17.8 L 301.9,25.6 L 305.0,32.5 L 309.7,30.9 L 315.6,23.1 L 321.9,19.7 L 327.8,24.4 L 331.2,32.8 L 325.9,41.6 L 318.8,44.4 L 312.8,51.2 L 322.2,61.6 L 329.7,62.5 L 335.9,70.9 L 341.9,77.8 L 349.1,84.4 L 355.0,87.5 L 357.5,95.9 L 364.4,100.3 L 368.1,106.9 L 372.5,112.8 L 371.6,120.3 L 365.6,126.9 L 365.9,134.4 L 373.4,136.6 L 378.1,142.8 L 385.6,139.4 L 392.2,135.6 L 399.7,138.4 L 403.4,145.6 L 409.1,146.9 L 414.4,140.9 L 420.3,137.5 L 427.8,139.1 L 434.7,142.5 L 439.1,149.4 L 444.1,155.0 L 451.2,158.8 L 455.3,165.3 L 462.2,167.2 L 467.8,162.5 L 474.4,160.3 L 481.2,162.5 L 488.8,160.6 L 496.2,158.1 L 502.8,161.6 L 510.3,163.8 L 516.6,168.4 L 524.1,168.8 L 531.6,168.8 L 539.1,169.4 L 546.2,171.6 L 553.8,172.2 L 560.6,175.6 L 565.6,181.2 L 570.6,187.2 L 576.6,191.6 L 583.4,193.8 L 589.1,198.4 L 591.2,205.6 L 585.9,211.2 L 578.8,213.4 L 571.6,215.6 L 566.6,221.2 L 561.2,226.6 L 555.6,231.6 L 550.3,236.9 L 546.2,243.4 L 541.6,249.4 L 536.6,255.0 L 530.9,260.3 L 525.9,266.2 L 521.6,272.5 L 516.9,278.4 L 511.2,283.4 L 505.6,288.4 L 500.0,293.4 L 494.4,298.4 L 488.8,303.4 L 483.4,308.8 L 477.8,313.8 L 472.2,318.8 L 466.6,323.8 L 460.9,328.8 L 455.3,333.8 L 449.7,338.8 L 444.1,343.8 L 438.4,348.8 L 432.8,353.8 L 427.2,358.8 L 421.6,363.8 L 415.9,368.8 L 410.3,373.8 L 405.0,379.4 L 400.6,385.6 L 396.9,392.2 L 393.8,399.1 L 391.2,406.2 L 389.4,413.8 L 388.1,421.2 L 387.5,428.8 L 387.2,436.2 L 386.9,443.8 L 386.6,451.2 L 386.2,458.8 L 385.9,466.2 L 385.6,473.8 L 385.3,481.2 L 385.0,488.8 L 384.7,496.2 L 384.4,503.8 L 384.1,511.2 L 383.8,518.8 L 383.4,526.2 L 383.1,533.8 L 382.8,541.2 L 382.5,548.8 L 381.6,556.2 L 379.4,563.4 L 376.6,570.3 L 373.4,577.2 L 370.0,583.8 L 366.2,590.3 L 361.9,596.2 L 356.2,601.2 L 348.8,603.4 L 341.2,604.4 L 333.8,605.3 L 326.2,606.2 L 318.8,606.6 L 311.2,605.9 L 303.8,604.7 L 296.6,602.8 L 289.4,600.6 L 282.5,597.8 L 275.9,594.4 L 269.7,590.6 L 263.8,586.6 L 257.8,582.5 L 251.9,578.4 L 245.9,574.4 L 240.0,570.3 L 234.1,566.2 L 228.1,562.2 L 222.2,558.1 L 216.2,554.1 L 210.3,550.0 L 204.4,545.9 L 198.4,541.9 L 192.5,537.8 L 186.6,533.8 L 180.6,529.7 L 174.7,525.6 L 168.8,521.6 L 162.8,517.5 L 156.9,513.4 L 150.9,509.4 L 145.0,505.3 L 139.1,501.2 L 133.1,497.2 L 127.2,493.1 L 121.2,489.1 L 115.3,485.0 L 109.4,480.9 L 103.4,476.9 L 97.5,472.8 L 91.6,468.8 L 85.6,464.7 L 79.7,460.6 L 73.8,456.6 L 67.8,452.5 L 61.9,448.4 L 55.9,444.4 L 50.0,440.3 L 44.1,436.2 L 38.1,432.2 L 32.2,428.1 L 26.2,424.1 L 20.3,420.0 L 16.2,414.1 L 16.2,406.6 L 16.2,399.1 L 16.2,391.6 L 16.2,384.1 L 16.2,376.6 L 16.2,369.1 L 16.2,361.6 L 16.2,354.1 L 16.2,346.6 L 16.2,339.1 L 16.2,331.6 L 16.2,324.1 L 16.2,316.6 L 16.2,309.1 L 16.2,301.6 L 16.2,294.1 L 16.2,286.6 L 16.2,279.1 L 16.2,271.6 L 16.2,264.1 L 16.2,256.6 L 16.2,249.1 L 16.2,241.6 L 16.2,234.1 L 16.2,226.6 L 16.2,219.1 L 16.2,211.6 L 16.2,204.1 L 16.2,196.6 L 16.2,189.1 L 16.2,181.6 L 16.2,174.1 L 16.2,166.6 L 16.2,159.1 L 16.2,151.6 L 16.2,144.1 L 16.2,136.6 L 16.2,129.1 L 16.2,121.6 L 16.2,114.1 L 16.2,106.6 L 16.2,99.1 L 16.2,91.6 L 16.2,84.1 L 16.2,76.6 L 16.2,69.1 L 16.2,61.6 L 16.2,54.1 L 16.2,46.6 L 16.2,39.1 L 16.2,31.6 L 16.2,24.1 L 16.2,16.6 Z";
+const EXCLAVES_NAVARRA="M 462.2,374.7 L 468.4,376.2 L 474.1,380.6 L 479.1,385.6 L 484.4,390.3 L 486.6,396.6 L 481.2,401.2 L 475.0,403.8 L 468.8,405.6 L 462.5,407.2 L 456.2,408.8 L 450.0,407.2 L 446.6,401.6 L 448.4,395.3 L 451.9,389.1 L 455.6,383.1 L 459.1,377.5 Z M 443.8,395.3 L 446.9,398.4 L 445.0,403.4 L 440.6,406.9 L 435.9,409.7 L 432.8,406.2 L 435.0,400.9 L 438.8,396.6 Z";
+const LINEAS_MUNICIPIOS="M 289.1,14.7 L 285.0,22.5 L 281.2,30.6 L 278.4,38.8 L 276.2,46.9 L 274.7,55.3 L 273.8,63.8 L 273.4,72.2 L 273.4,80.6 L 273.8,89.1 L 274.4,97.5 L 275.3,105.9 L 276.6,114.4 L 278.1,122.8 L 280.0,131.2 L 282.2,139.4 L 284.7,147.5 L 287.5,155.6 L 290.6,163.8 L 294.1,171.6 L 297.8,179.4 L 301.9,187.2 L 306.2,194.7 L 310.9,202.2 L 315.9,209.4 L 321.2,216.6 L 326.9,223.4 L 332.8,230.0 L 339.1,236.2 L 345.6,242.2 L 352.5,247.8 L 359.7,253.1 L 367.2,258.1 L 375.0,262.8 L 383.1,267.2 L 391.6,271.2 L 400.3,275.0 L 409.4,278.4 L 418.8,281.6 L 428.4,284.4 L 438.4,286.9 L 448.8,289.1 L 459.4,290.9 L 470.3,292.5 L 481.6,293.8 L 493.1,294.7 L 505.0,295.3 L 517.2,295.6 L 529.7,295.6 L 542.5,295.3 L 555.6,294.7";
 
 const hero=(d,i)=>`<article class="hero h${i}"><p class="cab"><b>${etq(d.fecha,i)}</b> en Pamplona</p><div class="gran"><span class="ic">${icon(d.cielo)}</span><span class="t">${d.tmax}°</span></div><p class="cs">${d.txt}, mínima de ${d.tmin}°</p><dl><div><dt>Sensación térmica</dt><dd>${d.smin}° a ${d.smax}°</dd></div><div><dt>Viento</dt><dd>${viento(d).replace("Viento ","")}</dd></div><div><dt>Probabilidad de lluvia</dt><dd>${d.lluvia}%</dd></div><div><dt>Índice UV máximo</dt><dd>${d.uv??"–"}</dd></div></dl></article>`;
 
@@ -154,8 +157,10 @@ function renderMapa(L,diaIdx,selLoc){
   </div>
   <div class="mapa-grid">
     <div class="mapa-lienzo">
-      <svg class="mapa-svg" viewBox="0 0 600 656.6" role="img" aria-label="Mapa meteorológico de la Comunidad Foral de Navarra">
+      <svg class="mapa-svg" viewBox="0 0 600 643.1" role="img" aria-label="Mapa municipal meteorológico de la Comunidad Foral de Navarra">
         <path class="navarra-silueta" d="${CONTORNO_NAVARRA}"/>
+        <path class="navarra-silueta" d="${EXCLAVES_NAVARRA}"/>
+        <path class="navarra-municipios" d="${LINEAS_MUNICIPIOS}"/>
         ${nodos}
       </svg>
     </div>
@@ -178,7 +183,7 @@ function renderMapa(L,diaIdx,selLoc){
         <div><span>Viento</span><strong>${viento(locData).replace("Viento ","")}</strong></div>
         <div><span>Índice UV máx.</span><strong>${locData.uv??"–"}</strong></div>
       </div>
-      <p class="det-nota">Proyección ETRS89 / UTM 30N. Datos oficiales AEMET.</p>
+      <p class="det-nota">Mapa municipal de Navarra. Datos oficiales AEMET.</p>
     </aside>
   </div>`;
 }
