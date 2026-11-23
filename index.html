@@ -24,6 +24,47 @@ h2{font-size:1.4rem;font-weight:600;margin-bottom:.75rem}
 .cs{margin:.25rem 0 1.25rem;font-size:1.1rem}
 dl{display:grid;grid-template-columns:repeat(2,1fr);gap:.75rem 1rem}
 dt{color:var(--rosa);font-size:.85rem}dd{font-weight:600}
+
+/* Mapa meteorológico de Navarra */
+.mapa-sec{background:linear-gradient(165deg,#232934 0%,var(--carbon) 100%);border:1px solid rgba(245,239,237,.08);border-radius:28px;padding:clamp(1.15rem,2.5vw,1.75rem)}
+.mapa-cab{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:.75rem;margin-bottom:1rem}
+.mapa-cab h2{margin:0}
+.mapa-sub{color:var(--arena);font-size:.9rem;margin-top:.15rem}
+.tabs{display:inline-flex;background:var(--carbon);padding:.25rem;border-radius:14px;border:1px solid rgba(245,239,237,.1)}
+.tab{background:transparent;border:0;color:var(--arena);font:600 .9rem/1 "Bricolage Grotesque",system-ui,sans-serif;padding:.55rem 1rem;border-radius:10px;cursor:pointer;transition:background .2s,color .2s}
+.tab[aria-selected="true"]{background:var(--granate);color:var(--hueso)}
+.tab:focus-visible{outline:2px solid var(--rosa);outline-offset:2px}
+.mapa-grid{display:grid;grid-template-columns:1fr;gap:1.25rem;align-items:center}
+@media(min-width:860px){.mapa-grid{grid-template-columns:1.25fr .85fr}}
+.mapa-lienzo{width:100%;max-width:580px;margin:auto;position:relative}
+.mapa-svg{width:100%;height:auto;display:block;overflow:visible}
+.navarra-silueta{fill:var(--pizarra);stroke:rgba(205,147,145,.45);stroke-width:2.5;stroke-linejoin:round;filter:drop-shadow(0 12px 24px rgba(0,0,0,.35))}
+.nodo{cursor:pointer;transition:transform .15s ease}
+.nodo:hover .nodo-card,.nodo.activo .nodo-card{fill:var(--granate);stroke:var(--rosa);stroke-width:1.8}
+.nodo:focus-visible{outline:none}
+.nodo:focus-visible .nodo-card{stroke:var(--hueso);stroke-width:2}
+.nodo-punto{fill:var(--rosa);stroke:var(--carbon);stroke-width:2}
+.nodo.activo .nodo-punto{fill:var(--hueso);r:5.5}
+.nodo-card{fill:rgba(29,31,34,.92);stroke:rgba(245,239,237,.18);stroke-width:1.2}
+.nodo-nombre{fill:var(--hueso);font-size:11.5px;font-weight:600}
+.nodo-tmax{fill:var(--hueso);font-size:13px;font-weight:800}
+.nodo-tmin{fill:var(--rosa);font-size:11.5px;font-weight:600}
+.nodo-ic{font-size:17px}
+
+/* Panel lateral de detalle del municipio seleccionado */
+.mapa-detalle{background:var(--vino);border-radius:22px;padding:1.25rem 1.4rem;display:grid;gap:.85rem}
+.det-top{display:flex;justify-content:space-between;align-items:flex-start;gap:.75rem}
+.det-loc{font-size:1.35rem;font-weight:800;line-height:1.15}
+.det-dia{color:var(--rosa);font-size:.85rem;text-transform:capitalize}
+.det-ic{font-size:2.6rem;line-height:1}
+.det-temps{display:flex;align-items:baseline;gap:.75rem}
+.det-max{font-size:2.6rem;font-weight:800;line-height:1}
+.det-min{font-size:1.25rem;font-weight:600;color:var(--rosa)}
+.det-txt{font-size:.98rem;color:var(--hueso)}
+.det-meta{display:grid;grid-template-columns:repeat(2,1fr);gap:.6rem .75rem;padding-top:.65rem;border-top:1px solid rgba(245,239,237,.12);font-size:.85rem}
+.det-meta span{color:var(--rosa);display:block;font-size:.78rem}
+.det-nota{font-size:.78rem;color:var(--arena)}
+
 .filas{container-type:inline-size;display:grid;gap:.5rem}
 .fila{display:grid;grid-template-columns:5.5rem 1fr minmax(8rem,1.2fr);grid-template-areas:"d c r" "m m m";align-items:center;gap:.25rem 1rem;background:var(--pizarra);border-radius:16px;padding:.75rem 1rem}
 @container (min-width:680px){.fila{grid-template-columns:7rem 12rem minmax(10rem,1fr) 2fr;grid-template-areas:"d c r m"}}
@@ -55,20 +96,120 @@ footer,.err{color:var(--arena);font-size:.85rem}
 const icon=c=>{const n=parseInt(c);return !n||n<=11?"☀️":n==12||n==17?"🌤️":n==13?"⛅":n==14?"🌥️":n<=16?"☁️":n<30?"🌧️":n<40?"🌨️":n<50?"🌦️":n<70?"⛈️":n<80?"🌨️":"🌫️"};
 const etq=(f,i)=>i==0?"Hoy":i==1?"Mañana":new Date(f+"T12:00:00").toLocaleDateString("es",{weekday:"long",day:"numeric"});
 const viento=d=>d.dir=="C"||!d.vel?"Viento en calma":`Viento ${d.dir} a ${d.vel} km/h`;
+
+// Coordenadas proyectadas (WGS84 -> SVG viewBox 0 0 600 663) y desplazamiento de tarjeta para evitar solapamientos
+const COORDS={
+  "Bera":            {x:281.4,y:57.3, dx:-96,dy:-30,w:88},
+  "Elizondo":        {x:332.1,y:112.9,dx:12, dy:-18,w:92},
+  "Altsasu":         {x:136.0,y:215.0,dx:-96,dy:-22,w:88},
+  "Isaba":           {x:511.8,y:229.9,dx:-84,dy:12, w:86},
+  "Pamplona":        {x:293.7,y:249.8,dx:12, dy:-22,w:96},
+  "Estella-Lizarra": {x:177.4,y:307.5,dx:-116,dy:-14,w:108},
+  "Sangüesa":        {x:403.0,y:346.9,dx:12, dy:-20,w:92},
+  "Tafalla":         {x:285.1,y:366.4,dx:-94,dy:-16,w:86},
+  "Tudela":          {x:305.5,y:557.7,dx:12, dy:-22,w:86}
+};
+
+const CONTORNO_NAVARRA="M 269.8,50.7 L 292.5,45.0 L 319.6,60.2 L 349.8,76.6 L 380.0,101.2 L 384.5,134.0 L 358.8,150.4 L 380.0,166.8 L 413.2,158.6 L 446.4,168.8 L 491.6,179.1 L 536.9,189.4 L 555.0,226.3 L 524.8,271.4 L 479.6,324.7 L 440.3,353.4 L 413.2,398.5 L 389.0,443.6 L 380.0,488.7 L 375.4,537.9 L 361.9,578.9 L 354.3,617.9 L 319.6,613.8 L 283.4,599.5 L 256.2,574.8 L 230.6,552.3 L 259.3,517.4 L 256.2,486.7 L 229.1,474.4 L 195.9,451.8 L 165.7,414.9 L 131.0,400.6 L 81.2,396.5 L 45.0,371.8 L 55.6,330.8 L 87.2,302.1 L 103.8,269.3 L 106.9,236.5 L 122.0,207.8 L 168.7,181.2 L 183.8,150.4 L 198.9,127.8 L 212.5,93.0 L 242.7,68.4 Z";
+
 const hero=(d,i)=>`<article class="hero h${i}"><p class="cab"><b>${etq(d.fecha,i)}</b> en Pamplona</p><div class="gran"><span class="ic">${icon(d.cielo)}</span><span class="t">${d.tmax}°</span></div><p class="cs">${d.txt}, mínima de ${d.tmin}°</p><dl><div><dt>Sensación térmica</dt><dd>${d.smin}° a ${d.smax}°</dd></div><div><dt>Viento</dt><dd>${viento(d).replace("Viento ","")}</dd></div><div><dt>Probabilidad de lluvia</dt><dd>${d.lluvia}%</dd></div><div><dt>Índice UV máximo</dt><dd>${d.uv??"–"}</dd></div></dl></article>`;
+
 function filas(dias){
   const lo=Math.min(...dias.map(d=>d.tmin)),hi=Math.max(...dias.map(d=>d.tmax)),sp=(hi-lo)||1;
   return `<div class="filas">`+dias.map((d,i)=>`<div class="fila"><span class="dia">${etq(d.fecha,i)}</span><span class="cielo">${icon(d.cielo)}<small>${d.txt}</small></span><span class="rango">${d.tmin}°<span class="pista"><span class="barra" style="left:${(d.tmin-lo)/sp*100}%;width:${Math.max((d.tmax-d.tmin)/sp*100,6)}%"></span></span>${d.tmax}°</span><span class="meta"><span>Sensación ${d.smin}° a ${d.smax}°</span><span>${viento(d)}</span><span>Lluvia ${d.lluvia}%</span></span></div>`).join("")+`</div>`;
 }
+
 const pueblo=(n,l)=>{const d=l.dias[0];return `<details><summary><span>${icon(d.cielo)}</span><b>${n}</b><span class="tn">${d.tmin}°</span><span class="tt">${d.tmax}°</span><span class="ver">Ver semana</span></summary>${filas(l.dias)}</details>`};
+
+function renderMapa(L,diaIdx,selLoc){
+  const nodos=Object.entries(COORDS).filter(([n])=>L[n]&&L[n].dias[diaIdx]).map(([n,c])=>{
+    const d=L[n].dias[diaIdx],activo=n===selLoc?" activo":"";
+    return `<g class="nodo${activo}" data-loc="${n}" tabindex="0" role="button" aria-label="${n}: ${d.txt}, máxima ${d.tmax}°, mínima ${d.tmin}°">
+      <line x1="${c.x}" y1="${c.y}" x2="${c.x+(c.dx>0?12:-12)}" y2="${c.y}" stroke="rgba(205,147,145,.5)" stroke-width="1.2"/>
+      <circle class="nodo-punto" cx="${c.x}" cy="${c.y}" r="4.2"/>
+      <g transform="translate(${c.x+c.dx},${c.y+c.dy})">
+        <rect class="nodo-card" x="0" y="0" width="${c.w}" height="44" rx="10"/>
+        <text class="nodo-nombre" x="8" y="15">${n}</text>
+        <text class="nodo-ic" x="7" y="36">${icon(d.cielo)}</text>
+        <text class="nodo-tmax" x="31" y="35">${d.tmax}°</text>
+        <text class="nodo-tmin" x="58" y="35">${d.tmin}°</text>
+      </g>
+    </g>`;
+  }).join("");
+
+  const locData=L[selLoc]?.dias[diaIdx]||L.Pamplona.dias[diaIdx];
+  const locName=L[selLoc]?selLoc:"Pamplona";
+
+  return `<div class="mapa-cab">
+    <div>
+      <h2>Mapa del tiempo en Navarra</h2>
+      <p class="mapa-sub">Estado del cielo y temperaturas (máx. / mín.) por localidad. Pulsa un municipio para ver el detalle.</p>
+    </div>
+    <div class="tabs" role="tablist" aria-label="Seleccionar día de previsión">
+      <button class="tab" role="tab" data-dia="0" aria-selected="${diaIdx===0}">Hoy</button>
+      <button class="tab" role="tab" data-dia="1" aria-selected="${diaIdx===1}">Mañana</button>
+      <button class="tab" role="tab" data-dia="2" aria-selected="${diaIdx===2}">Pasado</button>
+    </div>
+  </div>
+  <div class="mapa-grid">
+    <div class="mapa-lienzo">
+      <svg class="mapa-svg" viewBox="0 0 600 663" role="img" aria-label="Mapa meteorológico de la Comunidad Foral de Navarra">
+        <path class="navarra-silueta" d="${CONTORNO_NAVARRA}"/>
+        ${nodos}
+      </svg>
+    </div>
+    <aside class="mapa-detalle" aria-live="polite">
+      <div class="det-top">
+        <div>
+          <p class="det-dia">${etq(locData.fecha,diaIdx)}</p>
+          <h3 class="det-loc">${locName}</h3>
+        </div>
+        <span class="det-ic">${icon(locData.cielo)}</span>
+      </div>
+      <div class="det-temps">
+        <span class="det-max">${locData.tmax}°</span>
+        <span class="det-min">mín. ${locData.tmin}°</span>
+      </div>
+      <p class="det-txt">${locData.txt}</p>
+      <div class="det-meta">
+        <div><span>Sensación térmica</span><strong>${locData.smin}° a ${locData.smax}°</strong></div>
+        <div><span>Lluvia</span><strong>${locData.lluvia}%</strong></div>
+        <div><span>Viento</span><strong>${viento(locData).replace("Viento ","")}</strong></div>
+        <div><span>Índice UV máx.</span><strong>${locData.uv??"–"}</strong></div>
+      </div>
+      <p class="det-nota">Escala geográfica proyectada (WGS84). Datos oficiales AEMET.</p>
+    </aside>
+  </div>`;
+}
+
 const altura=()=>parent.postMessage({tiempoAltura:document.documentElement.scrollHeight},"*");
+
 fetch("data/tiempo.json",{cache:"no-cache"}).then(r=>r.json()).then(j=>{
   const L=j.lugares,p=L.Pamplona.dias,otros=Object.entries(L).filter(([n])=>n!="Pamplona");
   const act=new Date(j.actualizado).toLocaleString("es",{dateStyle:"long",timeStyle:"short"});
+  let diaMapa=0,locMapa="Pamplona";
+
   app.innerHTML=`<section><div class="heros">${hero(p[0],0)}${p[1]?hero(p[1],1):""}</div></section>
+  <section class="mapa-sec" id="mapa-contenedor">${renderMapa(L,diaMapa,locMapa)}</section>
   <section><h2>La semana en Pamplona</h2>${filas(p)}</section>
   <section><h2>El tiempo en el resto de Navarra</h2><div class="pueblos">${otros.map(([n,l])=>pueblo(n,l)).join("")}</div></section>
   <footer>Fuente: AEMET (Agencia Estatal de Meteorología). Actualizado el ${act}.</footer>`;
+
+  const cont=document.getElementById("mapa-contenedor");
+  const refrescar=()=>{cont.innerHTML=renderMapa(L,diaMapa,locMapa);altura();};
+  cont.addEventListener("click",e=>{
+    const tab=e.target.closest(".tab");
+    if(tab){diaMapa=Number(tab.dataset.dia);refrescar();return;}
+    const nodo=e.target.closest(".nodo");
+    if(nodo){locMapa=nodo.dataset.loc;refrescar();}
+  });
+  cont.addEventListener("keydown",e=>{
+    if(e.key==="Enter"||e.key===" "){
+      const nodo=e.target.closest(".nodo");
+      if(nodo){e.preventDefault();locMapa=nodo.dataset.loc;refrescar();}
+    }
+  });
+
   altura();document.addEventListener("toggle",altura,true);addEventListener("resize",altura);
 }).catch(()=>{app.innerHTML=`<p class="err">No se ha podido cargar la previsión. Inténtalo de nuevo en unos minutos.</p>`});
 </script>
