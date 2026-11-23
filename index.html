@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>El tiempo en Navarra</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&display=swap" rel="stylesheet">
+<style>
+:root{--rosa:#CD9391;--granate:#831A2E;--vino:#3B0713;--carbon:#1D1F22;--azul:#365EA1;--pizarra:#2A3A55;--arena:#B09F99;--hueso:#F5EFED}
+*{box-sizing:border-box;margin:0}
+body{background:var(--carbon);color:var(--hueso);font:400 1rem/1.5 "Bricolage Grotesque",system-ui,sans-serif;padding:clamp(1rem,3vw,2rem)}
+main{max-width:1100px;margin:auto;display:grid;gap:2rem}
+h2{font-size:1.4rem;font-weight:600;margin-bottom:.75rem}
+.heros{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:1rem}
+.hero{border-radius:28px;padding:1.5rem 1.75rem}
+.h0{background:linear-gradient(155deg,var(--granate),var(--vino))}
+.h1{background:var(--pizarra)}
+.cab{color:var(--rosa)}.h1 .cab,.h1 dt{color:var(--arena)}
+.gran{display:flex;align-items:center;gap:1rem}
+.ic{font-size:clamp(3rem,9vw,4.5rem)}
+.t{font-size:clamp(5rem,16vw,9rem);font-weight:800;line-height:1;letter-spacing:-.04em}
+.cs{margin:.25rem 0 1.25rem;font-size:1.1rem}
+dl{display:grid;grid-template-columns:repeat(2,1fr);gap:.75rem 1rem}
+dt{color:var(--rosa);font-size:.85rem}dd{font-weight:600}
+.filas{container-type:inline-size;display:grid;gap:.5rem}
+.fila{display:grid;grid-template-columns:5.5rem 1fr minmax(8rem,1.2fr);grid-template-areas:"d c r" "m m m";align-items:center;gap:.25rem 1rem;background:var(--pizarra);border-radius:16px;padding:.75rem 1rem}
+@container (min-width:680px){.fila{grid-template-columns:7rem 12rem minmax(10rem,1fr) 2fr;grid-template-areas:"d c r m"}}
+.dia{grid-area:d;text-transform:capitalize;font-weight:600}
+.cielo{grid-area:c;display:flex;gap:.5rem;align-items:center;font-size:1.5rem}
+.cielo small{font-size:.85rem;color:var(--arena);line-height:1.2}
+.rango{grid-area:r;display:flex;align-items:center;gap:.5rem;font-weight:600}
+.pista{flex:1;height:8px;border-radius:8px;background:var(--carbon);position:relative;overflow:hidden}
+.barra{position:absolute;top:0;bottom:0;border-radius:8px;background:linear-gradient(90deg,var(--azul),var(--rosa));transform-origin:left;animation:crece .9s ease-out both}
+@keyframes crece{from{transform:scaleX(0)}}
+.meta{grid-area:m;display:flex;flex-wrap:wrap;gap:.25rem 1rem;font-size:.85rem;color:var(--arena)}
+.pueblos{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:1rem;align-items:start}
+details{background:var(--vino);border-radius:20px;padding:1rem 1.25rem}
+details .fila{background:var(--carbon)}
+summary{display:flex;align-items:center;gap:.75rem;cursor:pointer;list-style:none}
+summary::-webkit-details-marker{display:none}
+summary b{flex:1;font-size:1.15rem}
+summary .tt{font-weight:800;font-size:1.6rem}summary .tn{color:var(--rosa)}
+summary .ver{font-size:.8rem;color:var(--arena)}
+details[open] summary{margin-bottom:.75rem}details[open] .ver{display:none}
+summary:focus-visible{outline:2px solid var(--rosa);outline-offset:4px}
+footer,.err{color:var(--arena);font-size:.85rem}
+@media(prefers-reduced-motion:reduce){.barra{animation:none}}
+</style>
+</head>
+<body>
+<main id="app"><p class="err">Cargando previsión…</p></main>
+<script>
+const icon=c=>{const n=parseInt(c);return !n||n<=11?"☀️":n==12||n==17?"🌤️":n==13?"⛅":n==14?"🌥️":n<=16?"☁️":n<30?"🌧️":n<40?"🌨️":n<50?"🌦️":n<70?"⛈️":n<80?"🌨️":"🌫️"};
+const etq=(f,i)=>i==0?"Hoy":i==1?"Mañana":new Date(f+"T12:00:00").toLocaleDateString("es",{weekday:"long",day:"numeric"});
+const viento=d=>d.dir=="C"||!d.vel?"Viento en calma":`Viento ${d.dir} a ${d.vel} km/h`;
+const hero=(d,i)=>`<article class="hero h${i}"><p class="cab"><b>${etq(d.fecha,i)}</b> en Pamplona</p><div class="gran"><span class="ic">${icon(d.cielo)}</span><span class="t">${d.tmax}°</span></div><p class="cs">${d.txt}, mínima de ${d.tmin}°</p><dl><div><dt>Sensación térmica</dt><dd>${d.smin}° a ${d.smax}°</dd></div><div><dt>Viento</dt><dd>${viento(d).replace("Viento ","")}</dd></div><div><dt>Probabilidad de lluvia</dt><dd>${d.lluvia}%</dd></div><div><dt>Índice UV máximo</dt><dd>${d.uv??"–"}</dd></div></dl></article>`;
+function filas(dias){
+  const lo=Math.min(...dias.map(d=>d.tmin)),hi=Math.max(...dias.map(d=>d.tmax)),sp=(hi-lo)||1;
+  return `<div class="filas">`+dias.map((d,i)=>`<div class="fila"><span class="dia">${etq(d.fecha,i)}</span><span class="cielo">${icon(d.cielo)}<small>${d.txt}</small></span><span class="rango">${d.tmin}°<span class="pista"><span class="barra" style="left:${(d.tmin-lo)/sp*100}%;width:${Math.max((d.tmax-d.tmin)/sp*100,6)}%"></span></span>${d.tmax}°</span><span class="meta"><span>Sensación ${d.smin}° a ${d.smax}°</span><span>${viento(d)}</span><span>Lluvia ${d.lluvia}%</span></span></div>`).join("")+`</div>`;
+}
+const pueblo=(n,l)=>{const d=l.dias[0];return `<details><summary><span>${icon(d.cielo)}</span><b>${n}</b><span class="tn">${d.tmin}°</span><span class="tt">${d.tmax}°</span><span class="ver">Ver semana</span></summary>${filas(l.dias)}</details>`};
+const altura=()=>parent.postMessage({tiempoAltura:document.documentElement.scrollHeight},"*");
+fetch("data/tiempo.json",{cache:"no-cache"}).then(r=>r.json()).then(j=>{
+  const L=j.lugares,p=L.Pamplona.dias,otros=Object.entries(L).filter(([n])=>n!="Pamplona");
+  const act=new Date(j.actualizado).toLocaleString("es",{dateStyle:"long",timeStyle:"short"});
+  app.innerHTML=`<section><div class="heros">${hero(p[0],0)}${p[1]?hero(p[1],1):""}</div></section>
+  <section><h2>La semana en Pamplona</h2>${filas(p)}</section>
+  <section><h2>El tiempo en el resto de Navarra</h2><div class="pueblos">${otros.map(([n,l])=>pueblo(n,l)).join("")}</div></section>
+  <footer>Fuente: AEMET (Agencia Estatal de Meteorología). Actualizado el ${act}.</footer>`;
+  altura();document.addEventListener("toggle",altura,true);addEventListener("resize",altura);
+}).catch(()=>{app.innerHTML=`<p class="err">No se ha podido cargar la previsión. Inténtalo de nuevo en unos minutos.</p>`});
+</script>
+</body>
+</html>
