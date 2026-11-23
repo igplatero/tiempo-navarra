@@ -3,7 +3,6 @@ import json, os, time, unicodedata, urllib.request, datetime
 
 KEY = os.environ["AEMET_API_KEY"]
 BASE = "https://opendata.aemet.es/opendata/api"
-# nombre en la web -> inicios del nombre oficial en AEMET (sin tildes, en minusculas)
 LUGARES = {
     "Pamplona": ["pamplona"], "Tudela": ["tudela"], "Estella-Lizarra": ["estella"],
     "Tafalla": ["tafalla"], "Sangüesa": ["sanguesa"], "Altsasu": ["alsasua", "altsasu"],
@@ -13,7 +12,7 @@ LUGARES = {
 def norm(s):
     return "".join(c for c in unicodedata.normalize("NFD", s.lower()) if unicodedata.category(c) != "Mn")
 
-def get(url, intentos=3):
+def get(url, intentos=4):
     for i in range(intentos):
         try:
             req = urllib.request.Request(url, headers={"api_key": KEY, "Accept": "application/json"})
@@ -22,7 +21,9 @@ def get(url, intentos=3):
             except UnicodeDecodeError: txt = raw.decode("latin-1")
             return json.loads(txt)
         except Exception as e:
-            err = e; time.sleep(3 * (i + 1))
+            err = e
+            print("  reintento", i + 1, "->", e)
+            time.sleep(8 * (i + 1))
     raise err
 
 def datos(url):
@@ -41,16 +42,31 @@ def dia(d):
             "dir": v.get("direccion", ""), "vel": v.get("velocidad", 0),
             "lluvia": max(ll) if ll else 0, "uv": d.get("uvMax")}
 
+previo = {}
+if os.path.exists("data/tiempo.json"):
+    try:
+        with open("data/tiempo.json", encoding="utf-8") as f:
+            previo = json.load(f)["lugares"]
+    except Exception:
+        pass
+
 maestro = [m for m in datos(BASE + "/maestro/municipios") if m["id"].startswith("id31")]
 out = {}
 for nombre, alias in LUGARES.items():
     m = next((m for m in maestro if any(norm(m["nombre"]).startswith(a) for a in alias)), None)
     if not m:
-        print("NO ENCONTRADO:", nombre); continue
+        print("NO ENCONTRADO:", nombre)
+        continue
     print(nombre, "->", m["nombre"], m["id"])
-    p = datos(f"{BASE}/prediccion/especifica/municipio/diaria/{m['id'][2:]}")
-    out[nombre] = {"aemet": m["nombre"], "dias": [dia(d) for d in p[0]["prediccion"]["dia"]]}
-    time.sleep(1)
+    try:
+        p = datos(f"{BASE}/prediccion/especifica/municipio/diaria/{m['id'][2:]}")
+        out[nombre] = {"aemet": m["nombre"], "dias": [dia(d) for d in p[0]["prediccion"]["dia"]]}
+    except Exception as e:
+        print("FALLO", nombre, "->", e)
+        if nombre in previo:
+            out[nombre] = previo[nombre]
+            print("  se mantienen los datos anteriores de", nombre)
+    time.sleep(3)
 
 if "Pamplona" not in out:
     raise SystemExit("Sin datos de Pamplona: no se actualiza el archivo")
