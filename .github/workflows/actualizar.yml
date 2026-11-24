@@ -5,9 +5,13 @@ on:
   workflow_dispatch:
 permissions:
   contents: write
+concurrency:
+  group: actualizar-tiempo
+  cancel-in-progress: false
 jobs:
   datos:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
       - run: python scripts/fetch_aemet.py
@@ -16,5 +20,5 @@ jobs:
       - run: |
           git config user.name "tiempo-bot"
           git config user.email "tiempo-bot@users.noreply.github.com"
-          git add data/tiempo.json
-          git diff --staged --quiet || (git commit -m "Actualiza datos AEMET" && git push)
+          git add data
+          git diff --staged --quiet || (git commit -m "Actualiza datos AEMET" && git pull --rebase && git push)
