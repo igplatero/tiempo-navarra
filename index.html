@@ -95,7 +95,9 @@ footer,.err{color:var(--pizarra)}
 <main id="app"><p class="err">Cargando previsión…</p></main>
 <script>
 const icon=c=>{const n=parseInt(c);return !n||n<=11?"☀️":n==12||n==17?"🌤️":n==13?"⛅":n==14?"🌥️":n<=16?"☁️":n<30?"🌧️":n<40?"🌨️":n<50?"🌦️":n<70?"⛈️":n<80?"🌨️":"🌫️"};
-const etq=(f,i)=>i==0?"Hoy":i==1?"Mañana":new Date(f+"T12:00:00").toLocaleDateString("es",{weekday:"long",day:"numeric"});
+const iso=d=>d.toLocaleDateString("sv",{timeZone:"Europe/Madrid"});
+const HOY=iso(new Date()),MANANA=iso(new Date(Date.now()+864e5));
+const etq=(f,i)=>f==HOY?"Hoy":f==MANANA?"Mañana":new Date(f+"T12:00:00").toLocaleDateString("es",{weekday:"long",day:"numeric"});
 const viento=d=>d.dir=="C"||!d.vel?"Viento en calma":`Viento ${d.dir} a ${d.vel} km/h`;
 const hero=(d,i)=>`<article class="hero h${i}"><p class="cab"><b>${etq(d.fecha,i)}</b> en Pamplona</p><div class="gran"><span class="ic">${icon(d.cielo)}</span><span class="t">${d.tmax}°</span></div><p class="cs">${d.txt}, mínima de ${d.tmin}°</p><dl><div><dt>Sensación térmica</dt><dd>${d.smin}° a ${d.smax}°</dd></div><div><dt>Viento</dt><dd>${viento(d).replace("Viento ","")}</dd></div><div><dt>Probabilidad de lluvia</dt><dd>${d.lluvia}%</dd></div><div><dt>Índice UV máximo</dt><dd>${d.uv??"–"}</dd></div></dl></article>`;
 function filas(dias){
@@ -181,7 +183,7 @@ function renderMapa(L,diaIdx,selLoc){
 
 const altura=()=>parent.postMessage({tiempoAltura:document.documentElement.scrollHeight},"*");
 fetch("data/tiempo.json",{cache:"no-cache"}).then(r=>r.json()).then(j=>{
-  const L=j.lugares,p=L.Pamplona.dias,otros=Object.entries(L).filter(([n])=>n!="Pamplona");
+  const L=j.lugares;Object.values(L).forEach(l=>{l.dias=l.dias.filter(d=>d.fecha>=HOY)});for(const n in L)if(!L[n].dias.length)delete L[n];const p=L.Pamplona.dias,otros=Object.entries(L).filter(([n])=>n!="Pamplona");
   const act=new Date(j.actualizado).toLocaleString("es",{dateStyle:"long",timeStyle:"short"});
   let diaMapa=0,locMapa="Pamplona";
   app.innerHTML=`<section class="mapa-sec" id="mapa-contenedor">${renderMapa(L,diaMapa,locMapa)}</section>
